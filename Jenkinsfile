@@ -20,7 +20,7 @@ pipeline {
     }
     post {
         success {
-            mail to: 'admin@example.com',
+            mail to: 'i201786@nu.edu.pk',
                 subject: "Successful Deployment",
                 body: "The Boston Housing ML model has been successfully deployed."
         }
