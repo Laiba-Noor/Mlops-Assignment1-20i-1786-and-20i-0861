@@ -1,31 +1,47 @@
 pipeline {
     agent any
+
+    environment {
+        DOCKER_IMAGE_NAME = 'laibaAsra/mlops-assignment-1:final'
+    }
+
     stages {
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    // Builds a Docker image from a Dockerfile in the current directory
-                    docker.build('californiahousingml:latest')
+                    sh "docker build -t $DOCKER_IMAGE_NAME ."
                 }
             }
         }
-        stage('Push') {
+
+        stage('Login Dockerhub abd Push Docker Image') {
+            environment {
+                DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
+            }
             steps {
                 script {
-                    // Logs in to Docker Hub and pushes the built image
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
-                        docker.image('californiahousingml:latest').push()
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'laibanoor', passwordVariable: 'laiba123456')]) {
+                        sh "echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin"
+
+                        sh "docker push $DOCKER_IMAGE_NAME"
                     }
                 }
             }
         }
     }
+
     post {
+        always {
+            // Clean up Docker images
+            sh 'docker system prune -af'
+        }
         success {
-            // Sends an email notification upon successful deployment
-            mail to: 'i201786@nu.edu.pk',
-                subject: "Successful Deployment",
-                body: "The California Housing ML model has been successfully deployed."
+            echo 'Pipeline Success'
+            mail bcc: '', body: "<br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL de build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "Success CI: Project name -> ${env.JOB_NAME}", to: "umar.waseem@gmail.com";
+        }
+        failure {
+            echo 'Pipeline Failed'
+            mail bcc: '', body: "<br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL de build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "ERROR CI: Project name -> ${env.JOB_NAME}", to: "umar.waseem@gmail.com";
         }
     }
 }
