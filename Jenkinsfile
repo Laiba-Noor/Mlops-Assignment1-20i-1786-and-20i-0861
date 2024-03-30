@@ -4,7 +4,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    docker.build('bostonhousingml:latest')
+                    docker.build('californiahousingml:latest')
                 }
             }
         }
